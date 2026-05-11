@@ -230,6 +230,28 @@ function escolherSouEu(id) {
   const m = pessoa(id);
   toast('🏠 Bem-vindo, ' + (m.apelido || m.nome.split(' ')[0]) + '!');
   celebrar();
+  // Se a pessoa não tem família própria registrada (sem pais, sem filhos, sem cônjuges),
+  // oferece o guia "Comece sua linhagem"
+  setTimeout(() => oferecerBemVindo(id), 700);
+}
+
+function oferecerBemVindo(id) {
+  const m = pessoa(id); if (!m) return;
+  const semPais = paisDe(id).length === 0;
+  const semConj = unioesDe(id).length === 0;
+  const semFilhos = filhosDe(id).length === 0;
+  // Mostra apenas se faltam dois dos três (pessoa "incompleta")
+  const faltando = [semPais, semConj, semFilhos].filter(Boolean).length;
+  if (faltando >= 2) mostrarBemVindo(id);
+}
+
+function mostrarBemVindo(id) {
+  const m = pessoa(id); if (!m) return;
+  const primeiro = m.apelido || m.nome.split(' ')[0];
+  document.getElementById('bemVindoTitulo').textContent = 'Bem-vindo, ' + primeiro + '!';
+  document.getElementById('bemVindoSub').textContent =
+    'Você agora faz parte da árvore Martins. Que tal começar a SUA própria linhagem? Adicione sua família abaixo:';
+  abrir('modalBemVindo');
 }
 
 // ============================================================
@@ -1445,6 +1467,8 @@ document.getElementById('formPessoa').addEventListener('submit', (e) => {
       setViewerId(id);
       dados.config.focoId = id;
       toast('🏠 Bem-vindo, ' + nome.split(' ')[0] + '!');
+      // Após criar perfil próprio, oferece guia pra adicionar família
+      setTimeout(() => mostrarBemVindo(id), 800);
     } else {
       toast('🎉 ' + nome.split(' ')[0] + ' adicionado!');
     }
@@ -1497,13 +1521,15 @@ document.getElementById('btnSouEu').addEventListener('click', () => {
   if (!pessoaAtual) return;
   const m = pessoa(pessoaAtual);
   if (!confirm('Definir ' + m.nome + ' como "você" neste navegador? A árvore vai abrir centrada nesta pessoa daqui pra frente.')) return;
-  setViewerId(pessoaAtual);
-  dados.config.focoId = pessoaAtual;
+  const idEscolhido = pessoaAtual;
+  setViewerId(idEscolhido);
+  dados.config.focoId = idEscolhido;
   salvar();
   fechar('modalPerfil');
   renderArvore();
   toast('🏠 Pronto! Você é ' + (m.apelido || m.nome.split(' ')[0]));
   celebrar();
+  setTimeout(() => oferecerBemVindo(idEscolhido), 700);
 });
 
 // Quick-add buttons na aba Família
@@ -1515,6 +1541,19 @@ document.querySelectorAll('.qa-btn').forEach(btn => {
     else if (a === 'irmao') adicionarIrmao(pessoaAtual);
     else if (a === 'conjuge') adicionarConjuge(pessoaAtual);
     else if (a === 'filho') adicionarFilho(pessoaAtual);
+  });
+});
+
+// Botões do modal Bem-vindo (onboarding) — usa o viewer como alvo
+document.querySelectorAll('.bv-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!viewerId) return;
+    fechar('modalBemVindo');
+    const a = btn.dataset.acao;
+    if (a === 'pai_mae') adicionarPaiOuMae(viewerId);
+    else if (a === 'irmao') adicionarIrmao(viewerId);
+    else if (a === 'conjuge') adicionarConjuge(viewerId);
+    else if (a === 'filho') adicionarFilho(viewerId);
   });
 });
 

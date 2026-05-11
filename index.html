@@ -358,6 +358,48 @@
     </div>
   </div>
 
+  <!-- ===== Modal "Bem-vindo! Comece sua linhagem" ===== -->
+  <div class="modal" id="modalBemVindo" hidden>
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalBemVindo">✕</button>
+
+      <div class="welcome-header">
+        <div class="welcome-emoji">🎉</div>
+        <h2 id="bemVindoTitulo">Bem-vindo à família!</h2>
+        <p id="bemVindoSub">Agora você pode começar a SUA própria linhagem dentro da árvore Martins.</p>
+      </div>
+
+      <div class="welcome-acoes">
+        <button class="bv-btn" data-acao="pai_mae">
+          <span class="bv-emoji">👤</span>
+          <strong>Meus pais</strong>
+          <small>Adicione seu pai e sua mãe</small>
+        </button>
+        <button class="bv-btn" data-acao="irmao">
+          <span class="bv-emoji">👥</span>
+          <strong>Meus irmãos</strong>
+          <small>Adicione seus irmãos(ãs)</small>
+        </button>
+        <button class="bv-btn" data-acao="conjuge">
+          <span class="bv-emoji">❤️</span>
+          <strong>Meu cônjuge</strong>
+          <small>Esposa, marido ou parceiro(a)</small>
+        </button>
+        <button class="bv-btn" data-acao="filho">
+          <span class="bv-emoji">👶</span>
+          <strong>Meus filhos</strong>
+          <small>Adicione filhos e filhas</small>
+        </button>
+      </div>
+
+      <p class="welcome-dica">
+        💡 Você pode adicionar mais pessoas a qualquer momento clicando nos cards da árvore.
+      </p>
+
+      <button class="btn-secondary welcome-pular" data-close="modalBemVindo">Vou fazer isso depois</button>
+    </div>
+  </div>
+
   <!-- ===== Modal "Quem é você?" ===== -->
   <div class="modal" id="modalQuemSouEu" hidden>
     <div class="modal-card modal-quem">
