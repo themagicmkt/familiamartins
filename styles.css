@@ -27,6 +27,8 @@
 
   /* Cores por geração (anel da foto) */
   --gen-avos: #f59e0b;
+  --gen-bisavos: #d97706;
+  --gen-trisavos: #b45309;
   --gen-pais: #ec4899;
   --gen-eu: #a78bfa;
   --gen-filhos: #10b981;
@@ -546,15 +548,19 @@ button { cursor: pointer; border: none; background: none; }
 .person-photo.has-photo .photo-fallback { display: none; }
 
 /* Anel da foto por geração */
-.person.layer-avos .person-photo { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-avos), 0 6px 16px rgba(245, 158, 11, 0.25); }
-.person.layer-pais .person-photo { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-pais), 0 6px 16px rgba(236, 72, 153, 0.25); }
-.person.layer-filhos .person-photo { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-filhos), 0 6px 16px rgba(16, 185, 129, 0.25); }
-.person.layer-netos .person-photo { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-netos), 0 6px 16px rgba(59, 130, 246, 0.25); }
+.person.layer-avos .person-photo     { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-avos),     0 6px 16px rgba(245, 158, 11, 0.25); }
+.person.layer-bisavos .person-photo  { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-bisavos),  0 6px 16px rgba(217, 119, 6, 0.25); }
+.person.layer-trisavos .person-photo { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-trisavos), 0 6px 16px rgba(180, 83, 9, 0.25); }
+.person.layer-pais .person-photo     { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-pais),     0 6px 16px rgba(236, 72, 153, 0.25); }
+.person.layer-filhos .person-photo   { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-filhos),   0 6px 16px rgba(16, 185, 129, 0.25); }
+.person.layer-netos .person-photo    { box-shadow: 0 0 0 3px white, 0 0 0 5px var(--gen-netos),    0 6px 16px rgba(59, 130, 246, 0.25); }
 
-.person.layer-avos .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fde68a, #f59e0b); }
-.person.layer-pais .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fbcfe8, #ec4899); }
-.person.layer-filhos .person-photo:not(.has-photo) { background: linear-gradient(135deg, #a7f3d0, #10b981); }
-.person.layer-netos .person-photo:not(.has-photo) { background: linear-gradient(135deg, #bfdbfe, #3b82f6); }
+.person.layer-avos     .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fde68a, #f59e0b); }
+.person.layer-bisavos  .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fed7aa, #d97706); }
+.person.layer-trisavos .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fdba74, #b45309); }
+.person.layer-pais     .person-photo:not(.has-photo) { background: linear-gradient(135deg, #fbcfe8, #ec4899); }
+.person.layer-filhos   .person-photo:not(.has-photo) { background: linear-gradient(135deg, #a7f3d0, #10b981); }
+.person.layer-netos    .person-photo:not(.has-photo) { background: linear-gradient(135deg, #bfdbfe, #3b82f6); }
 
 .person-name {
   font-weight: 700; font-size: 0.95rem;

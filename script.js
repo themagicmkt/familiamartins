@@ -638,6 +638,27 @@ function avosDe(pid) {
   return out;
 }
 
+// Retorna ancestrais por nível: [pais, avós, bisavós, trisavós, ...]
+// Usa BFS, deduplicando.
+function ancestraisPorNivel(pid, maxNiveis = 8) {
+  const niveis = [];
+  let current = paisDe(pid);
+  for (let i = 0; i < maxNiveis; i++) {
+    if (current.length === 0) break;
+    niveis.push(current);
+    const proximoSet = new Map();
+    current.forEach(p => paisDe(p.id).forEach(av => proximoSet.set(av.id, av)));
+    current = [...proximoSet.values()];
+  }
+  return niveis;
+}
+
+function bisavosDe(pid) {
+  const out = [];
+  avosDe(pid).forEach(a => paisDe(a.id).forEach(b => out.push(b)));
+  return out;
+}
+
 // ============================================================
 // QUICK-ADD HELPERS
 // ============================================================
@@ -715,16 +736,12 @@ function aplicarContexto(novoId) {
 // CARDS
 // ============================================================
 function generationClass(id, focoId) {
-  // Determina a geração da pessoa em relação ao foco para colorir o anel
   if (id === focoId) return 'layer-eu';
-  const focoPais = paisDe(focoId).map(p => p.id);
-  if (focoPais.includes(id)) return 'layer-pais';
-  const focoAvos = avosDe(focoId).map(p => p.id);
-  if (focoAvos.includes(id)) return 'layer-avos';
-  const focoFilhos = filhosDe(focoId).map(p => p.id);
-  if (focoFilhos.includes(id)) return 'layer-filhos';
-  const focoNetos = netosDe(focoId).map(p => p.id);
-  if (focoNetos.includes(id)) return 'layer-netos';
+  if (paisDe(focoId).some(p => p.id === id)) return 'layer-pais';
+  if (avosDe(focoId).some(p => p.id === id)) return 'layer-avos';
+  if (bisavosDe(focoId).some(p => p.id === id)) return 'layer-bisavos';
+  if (filhosDe(focoId).some(p => p.id === id)) return 'layer-filhos';
+  if (netosDe(focoId).some(p => p.id === id)) return 'layer-netos';
   return 'layer-eu';
 }
 
@@ -879,10 +896,18 @@ function renderArvore() {
     welc.textContent = 'Olá, ' + primeiroNome + '! 👋';
   }
 
-  // === Avós ===
-  const avos = ordenarPorIdade(avosDe(focoId));
-  if (avos.length > 0) {
-    el.appendChild(criarCamada('Avós', avos.map(a => criarPessoaCard(a, { mini: true, layer: 'layer-avos' }))));
+  // === Ancestrais (avós, bisavós, trisavós, …) ===
+  // ancNiveis[0] = pais, [1] = avós, [2] = bisavós, [3] = trisavós, etc.
+  const ancNiveis = ancestraisPorNivel(focoId, 6);
+  const LABELS_ANC = [null, 'Avós', 'Bisavós', 'Trisavós', 'Tetravós', 'Pentavós', '6ª geração'];
+  const LAYERS_ANC = [null, 'layer-avos', 'layer-bisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos'];
+
+  // Renderiza dos mais antigos (último índice) até os avós (índice 1)
+  for (let i = ancNiveis.length - 1; i >= 1; i--) {
+    const nivel = ordenarPorIdade(ancNiveis[i]);
+    if (nivel.length === 0) continue;
+    el.appendChild(criarCamada(LABELS_ANC[i] || ((i + 1) + 'ª geração'),
+      nivel.map(a => criarPessoaCard(a, { mini: true, layer: LAYERS_ANC[i] || 'layer-trisavos' }))));
     el.appendChild(criarConector());
   }
 
