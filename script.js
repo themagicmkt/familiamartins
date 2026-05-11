@@ -8,6 +8,7 @@ const STORAGE_KEY_V2 = 'familia_martins_v2';
 const STORAGE_KEY_V1 = 'familia_martins_v1';
 const SESSION_KEY = 'familia_martins_logged';
 const CONQUISTAS_KEY = 'familia_martins_conquistas';
+const VIEWER_KEY = 'familia_martins_viewer'; // Quem é você (por navegador)
 
 // ============================================================
 // DADOS PADRAO
@@ -113,6 +114,91 @@ let dados;
 let conquistasGanhas = new Set();
 let pessoaAtual = null;
 let acaoContexto = null;
+let viewerId = null; // id da pessoa "que sou eu" neste navegador
+
+// ============================================================
+// VIEWER (quem é você, por navegador)
+// ============================================================
+function getViewerId() {
+  return localStorage.getItem(VIEWER_KEY);
+}
+function setViewerId(id) {
+  viewerId = id;
+  if (id) localStorage.setItem(VIEWER_KEY, id);
+  else localStorage.removeItem(VIEWER_KEY);
+  atualizarViewerChip();
+}
+function atualizarViewerChip() {
+  const chip = document.getElementById('viewerChip');
+  if (!chip) return;
+  if (!viewerId) { chip.hidden = true; return; }
+  const m = pessoa(viewerId);
+  if (!m) { chip.hidden = true; return; }
+  chip.hidden = false;
+  const av = document.getElementById('viewerAvatar');
+  if (m.foto) { av.style.backgroundImage = "url('" + m.foto + "')"; av.textContent = ''; }
+  else { av.style.backgroundImage = ''; av.textContent = gerarIniciais(m.nome); }
+  document.getElementById('viewerName').textContent = m.apelido || m.nome.split(' ')[0];
+}
+function voltarPraMim() {
+  if (!viewerId) { abrirQuemSouEu(); return; }
+  dados.config.focoId = viewerId;
+  salvar();
+  renderArvore();
+  document.querySelector('.tree-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function abrirQuemSouEu() {
+  renderQuemGrid('');
+  abrir('modalQuemSouEu');
+  setTimeout(() => document.getElementById('quemBusca').focus(), 100);
+}
+
+function renderQuemGrid(filtro) {
+  const grid = document.getElementById('quemGrid');
+  grid.innerHTML = '';
+  const q = removerAcentos((filtro || '').toLowerCase().trim());
+  const lista = Object.values(dados.members)
+    .filter(m => !q || removerAcentos(m.nome.toLowerCase()).includes(q) || (m.apelido && removerAcentos(m.apelido.toLowerCase()).includes(q)))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
+  if (lista.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:30px;font-style:italic;">Ninguém encontrado</p>';
+    return;
+  }
+  lista.forEach(m => {
+    const c = document.createElement('div');
+    c.className = 'quem-card';
+    const foto = document.createElement('div');
+    foto.className = 'quem-card-foto';
+    if (m.foto) foto.style.backgroundImage = "url('" + m.foto + "')";
+    else foto.textContent = gerarIniciais(m.nome);
+    const nome = document.createElement('div');
+    nome.className = 'quem-card-nome';
+    nome.textContent = m.apelido || m.nome;
+    c.appendChild(foto); c.appendChild(nome);
+    if (m.nascimento) {
+      const meta = document.createElement('div');
+      meta.className = 'quem-card-meta';
+      const ano = (m.nascimento.match(/\d{4}/) || [''])[0];
+      meta.textContent = ano;
+      c.appendChild(meta);
+    }
+    c.addEventListener('click', () => escolherSouEu(m.id));
+    grid.appendChild(c);
+  });
+}
+
+function escolherSouEu(id) {
+  setViewerId(id);
+  dados.config.focoId = id;
+  salvar();
+  renderArvore();
+  fechar('modalQuemSouEu');
+  const m = pessoa(id);
+  toast('🏠 Bem-vindo, ' + (m.apelido || m.nome.split(' ')[0]) + '!');
+  celebrar();
+}
 
 // ============================================================
 // PERSISTENCIA + MIGRAÇÃO
@@ -1139,7 +1225,15 @@ document.getElementById('formPessoa').addEventListener('submit', (e) => {
         }
       }
     }
-    toast('🎉 ' + nome.split(' ')[0] + ' adicionado!');
+    // Se está criando perfil próprio (vindo do "Não estou aqui"), define como viewer
+    if (window._proximoVirarViewer) {
+      window._proximoVirarViewer = false;
+      setViewerId(id);
+      dados.config.focoId = id;
+      toast('🏠 Bem-vindo, ' + nome.split(' ')[0] + '!');
+    } else {
+      toast('🎉 ' + nome.split(' ')[0] + ' adicionado!');
+    }
     celebrar();
   }
 
@@ -1183,6 +1277,19 @@ document.getElementById('btnFocarPerfil').addEventListener('click', () => {
   fechar('modalPerfil');
   renderArvore();
   document.querySelector('.tree-section').scrollIntoView({ behavior: 'smooth' });
+});
+
+document.getElementById('btnSouEu').addEventListener('click', () => {
+  if (!pessoaAtual) return;
+  const m = pessoa(pessoaAtual);
+  if (!confirm('Definir ' + m.nome + ' como "você" neste navegador? A árvore vai abrir centrada nesta pessoa daqui pra frente.')) return;
+  setViewerId(pessoaAtual);
+  dados.config.focoId = pessoaAtual;
+  salvar();
+  fechar('modalPerfil');
+  renderArvore();
+  toast('🏠 Pronto! Você é ' + (m.apelido || m.nome.split(' ')[0]));
+  celebrar();
 });
 
 // Quick-add buttons na aba Família
@@ -1314,7 +1421,32 @@ document.getElementById('btnTrocarFoco').addEventListener('click', () => {
 });
 
 document.getElementById('btnHome').addEventListener('click', () => {
-  document.querySelector('.tree-section').scrollIntoView({ behavior: 'smooth' });
+  voltarPraMim();
+});
+
+// Trocar perspectiva pelo chip
+document.getElementById('viewerTrocar').addEventListener('click', () => {
+  abrirQuemSouEu();
+});
+
+// Busca no modal "Quem é você?"
+document.getElementById('quemBusca').addEventListener('input', (e) => {
+  renderQuemGrid(e.target.value);
+});
+
+// "Não estou aqui" → abre form pra criar pessoa nova; após criada, define como viewer
+document.getElementById('quemNaoEstou').addEventListener('click', () => {
+  fechar('modalQuemSouEu');
+  acaoContexto = null;
+  abrirFormPessoa('novo', { contextoTitulo: '👤 Quem é você? Crie seu perfil' });
+  // Marca para definir como viewer no submit
+  window._proximoVirarViewer = true;
+});
+
+// "Pular" (visitante)
+document.getElementById('quemPular').addEventListener('click', () => {
+  fechar('modalQuemSouEu');
+  toast('OK, você está visitando');
 });
 
 // ============================================================
@@ -1388,8 +1520,24 @@ function fazerLogin() {
   app.hidden = false;
   sessionStorage.setItem(SESSION_KEY, '1');
   try {
+    // Carrega viewer existente
+    viewerId = getViewerId();
+    if (viewerId && pessoa(viewerId)) {
+      // Já tem viewer e a pessoa existe — usa como foco
+      dados.config.focoId = viewerId;
+    } else if (viewerId) {
+      // Tinha viewer mas a pessoa não existe mais — limpa
+      viewerId = null;
+      localStorage.removeItem(VIEWER_KEY);
+    }
+    atualizarViewerChip();
     renderArvore();
     checarConquistas(true);
+
+    // Primeira vez neste navegador → pergunta "Quem é você?"
+    if (!viewerId) {
+      setTimeout(() => abrirQuemSouEu(), 400);
+    }
   } catch (e) {
     console.error(e);
     toast('Erro ao carregar');

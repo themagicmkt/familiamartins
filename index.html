@@ -45,8 +45,17 @@
         <div class="search-results" id="buscaResultados" hidden></div>
       </div>
 
+      <div class="viewer-chip" id="viewerChip" hidden>
+        <span class="viewer-avatar" id="viewerAvatar"></span>
+        <span class="viewer-info">
+          <span class="viewer-label">Você é</span>
+          <span class="viewer-name" id="viewerName"></span>
+        </span>
+        <button class="viewer-trocar" id="viewerTrocar" title="Trocar">↻</button>
+      </div>
+
       <div class="topbar-actions">
-        <button class="btn-icon" id="btnHome" title="Início">🏠</button>
+        <button class="btn-icon" id="btnHome" title="Voltar pra você">🏠</button>
         <button class="btn-icon" id="btnEstatisticas" title="Estatísticas">📊</button>
         <button class="btn-icon" id="btnConquistas" title="Conquistas">🏆</button>
         <button class="btn-icon" id="btnConfig" title="Opções">⚙️</button>
@@ -101,6 +110,7 @@
         <p class="perfil-vida" id="perfilVida"></p>
 
         <div class="perfil-acoes">
+          <button class="chip-action highlight" id="btnSouEu">🏠 Sou eu!</button>
           <button class="chip-action" id="btnFocarPerfil">⊙ Focar aqui</button>
           <button class="chip-action" id="btnEditar">✏️ Editar</button>
           <button class="chip-action danger" id="btnExcluir">🗑 Excluir</button>
@@ -286,6 +296,22 @@
       <h2>🏆 Conquistas</h2>
       <p class="modal-sub">Marque sua jornada construindo a árvore da família</p>
       <div class="conquistas-grid" id="conquistasGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===== Modal "Quem é você?" ===== -->
+  <div class="modal" id="modalQuemSouEu" hidden>
+    <div class="modal-card modal-quem">
+      <h2>👋 Bem-vindo à árvore Martins!</h2>
+      <p class="modal-sub">Para colocar você no centro, escolha quem é você na família:</p>
+
+      <input type="text" id="quemBusca" placeholder="🔎 Procurar pelo seu nome..." class="quem-busca" />
+      <div class="quem-grid" id="quemGrid"></div>
+
+      <div class="quem-rodape">
+        <button class="btn-secondary" id="quemNaoEstou">+ Não estou aqui ainda — quero me adicionar</button>
+        <button class="btn-secondary" id="quemPular">Pular (visitante)</button>
+      </div>
     </div>
   </div>
 
