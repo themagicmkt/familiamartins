@@ -1,0 +1,12 @@
+Coloque as fotos nesta pasta com os seguintes nomes (formato .jpg):
+
+- diogo.jpg     -> Diogo Alvares Martins
+- gilberto.jpg  -> Gilberto Carlos Martins (pai)
+- nilma.jpg     -> Nilma Costa (mãe)
+- joao.jpg      -> João Flores Hass Martins (filho)
+- claudia.jpg   -> Cláudia Caroline Martins (irmã)
+- carlos.jpg    -> Carlos Rodrigo Martins (irmão)
+- vitor.jpg     -> Vitor Hugo Martins (irmão)
+
+As fotos serão carregadas automaticamente quando você atualizar a página.
+Recomendado: imagens quadradas (ex: 400x400 px) ou maiores.

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#a78bfa" />
+  <title>Família Martins 🌳</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== LOGIN ===== -->
+  <div class="login-wrap" id="loginOverlay">
+    <div class="login-card">
+      <div class="login-emoji">🌳</div>
+      <h1>Família Martins</h1>
+      <p>Coloque a senha para entrar</p>
+      <form id="loginForm">
+        <input type="password" id="senhaInput" placeholder="Senha" autofocus autocomplete="current-password" />
+        <button type="submit">Entrar →</button>
+        <p class="login-erro" id="loginErro"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== APP ===== -->
+  <div id="app" hidden>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">🌳</div>
+        <div class="brand-text">
+          <strong>Martins</strong>
+          <span>árvore da família</span>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon">🔎</span>
+        <input type="text" id="buscaInput" placeholder="Procurar familiar..." />
+        <div class="search-results" id="buscaResultados" hidden></div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn-icon" id="btnHome" title="Início">🏠</button>
+        <button class="btn-icon" id="btnEstatisticas" title="Estatísticas">📊</button>
+        <button class="btn-icon" id="btnConquistas" title="Conquistas">🏆</button>
+        <button class="btn-icon" id="btnConfig" title="Opções">⚙️</button>
+        <button class="btn-icon" id="btnSair" title="Sair">🚪</button>
+      </div>
+    </header>
+
+    <!-- WELCOME / PROGRESS -->
+    <section class="welcome">
+      <div class="welcome-grid">
+        <div class="welcome-card">
+          <h1 id="welcomeNome">Olá! 👋</h1>
+          <p>Esta é sua árvore genealógica. Clique em qualquer pessoa para ver, editar ou adicionar familiares.</p>
+        </div>
+        <div class="stats-strip" id="statsStrip"></div>
+      </div>
+    </section>
+
+    <!-- ÁRVORE -->
+    <section class="tree-section">
+      <div class="tree-header">
+        <h2>Sua família</h2>
+        <div class="tree-actions">
+          <button class="btn-primary" id="btnAddNovo">+ Adicionar familiar</button>
+        </div>
+      </div>
+
+      <div class="focus-bar" id="focusBar"></div>
+
+      <div class="tree-scroll">
+        <div class="tree" id="arvore"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Família Martins · <span id="ano"></span></span>
+      <span class="footer-sep">·</span>
+      <button class="footer-btn" id="btnExportar">💾 Backup</button>
+      <button class="footer-btn" id="btnImportar">📂 Restaurar</button>
+      <input type="file" id="inputImportar" accept=".json" hidden />
+    </footer>
+  </div>
+
+  <!-- ===== Modal Perfil ===== -->
+  <div class="modal" id="modalPerfil" hidden>
+    <div class="modal-card modal-perfil">
+      <button class="modal-close" data-close="modalPerfil">✕</button>
+
+      <div class="perfil-top">
+        <div class="perfil-foto" id="perfilFoto"></div>
+        <h2 id="perfilNome"></h2>
+        <p class="perfil-vida" id="perfilVida"></p>
+
+        <div class="perfil-acoes">
+          <button class="chip-action" id="btnFocarPerfil">⊙ Focar aqui</button>
+          <button class="chip-action" id="btnEditar">✏️ Editar</button>
+          <button class="chip-action danger" id="btnExcluir">🗑 Excluir</button>
+        </div>
+      </div>
+
+      <div class="perfil-tabs">
+        <button class="tab-btn active" data-tab="info">📋 Info</button>
+        <button class="tab-btn" data-tab="familia">👨‍👩‍👧 Família</button>
+        <button class="tab-btn" data-tab="memorias">📖 Memórias</button>
+      </div>
+
+      <div class="tab-panel active" data-panel="info">
+        <div class="info-grid" id="infoGrid"></div>
+      </div>
+
+      <div class="tab-panel" data-panel="familia">
+        <div id="painelFamilia"></div>
+        <div class="quick-add">
+          <p class="quick-add-titulo">+ Adicionar à família desta pessoa:</p>
+          <div class="quick-add-buttons">
+            <button class="qa-btn" data-acao="pai_mae"><span class="qa-emoji">👤</span><span>Pai/Mãe</span></button>
+            <button class="qa-btn" data-acao="irmao"><span class="qa-emoji">👥</span><span>Irmão(ã)</span></button>
+            <button class="qa-btn" data-acao="conjuge"><span class="qa-emoji">❤️</span><span>Cônjuge</span></button>
+            <button class="qa-btn" data-acao="filho"><span class="qa-emoji">👶</span><span>Filho(a)</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="memorias">
+        <div class="memoria-bio" id="memoriaBio"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal Form ===== -->
+  <div class="modal" id="modalForm" hidden>
+    <div class="modal-card modal-form">
+      <button class="modal-close" data-close="modalForm">✕</button>
+      <h2 id="formTitulo">Novo familiar</h2>
+
+      <form id="formPessoa">
+        <!-- Banner contextual: aparece quando estamos adicionando "filho de X", "cônjuge de Y" etc -->
+        <div class="qa-banner" id="qaBanner" hidden>
+          <div class="qa-banner-head">
+            <span class="qa-banner-emoji">✨</span>
+            <div>
+              <strong id="qaBannerTitulo"></strong>
+              <p>Crie uma pessoa nova abaixo OU escolha alguém que já existe na família:</p>
+            </div>
+          </div>
+          <select id="qaBannerExistente">
+            <option value="">— Criar pessoa nova (preencher formulário) —</option>
+          </select>
+        </div>
+
+        <!-- Relações: aparece em modo editar para mudar pai/mãe -->
+        <div class="rel-edit" id="relEdit" hidden>
+          <p class="rel-edit-titulo">👨‍👩‍👧 Quem são os pais desta pessoa?</p>
+          <div class="rel-edit-grid">
+            <label class="field">
+              <span>👤 Pai</span>
+              <select id="editPai"><option value="">— sem pai cadastrado —</option></select>
+            </label>
+            <label class="field">
+              <span>👩 Mãe</span>
+              <select id="editMae"><option value="">— sem mãe cadastrada —</option></select>
+            </label>
+          </div>
+          <p class="rel-edit-dica">💡 Para gerenciar cônjuges e filhos, use os botões na aba Família do perfil.</p>
+        </div>
+
+        <div class="foto-upload">
+          <div class="foto-preview" id="fotoPreview">📷</div>
+          <label class="btn-secondary">
+            Escolher foto
+            <input type="file" id="inputFoto" accept="image/*" hidden />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Nome completo *</span>
+          <input type="text" name="nome" required maxlength="120" placeholder="Ex: João Silva Martins" />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Apelido</span>
+            <input type="text" name="apelido" maxlength="60" placeholder="Como é chamado(a)" />
+          </label>
+          <label class="field">
+            <span>Gênero</span>
+            <select name="genero">
+              <option value="">—</option>
+              <option value="M">Masculino</option>
+              <option value="F">Feminino</option>
+              <option value="O">Outro</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Nascimento</span>
+            <input type="text" name="nascimento" placeholder="dd/mm/aaaa" maxlength="20" />
+          </label>
+          <label class="field">
+            <span>Local</span>
+            <input type="text" name="local_nascimento" maxlength="100" />
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Falecimento (se aplicável)</span>
+            <input type="text" name="falecimento" placeholder="dd/mm/aaaa" maxlength="20" />
+          </label>
+          <label class="field">
+            <span>Local</span>
+            <input type="text" name="local_falecimento" maxlength="100" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Profissão</span>
+          <input type="text" name="profissao" maxlength="120" />
+        </label>
+
+        <label class="field">
+          <span>Biografia / memórias</span>
+          <textarea name="bio" rows="4" placeholder="Histórias, conquistas, lembranças marcantes..."></textarea>
+        </label>
+
+        <fieldset class="form-relacao" id="formRelacao">
+          <legend>Como esta pessoa se conecta à família?</legend>
+          <label class="radio-opt">
+            <input type="radio" name="rel_tipo" value="filho" checked />
+            <span>É <strong>filho(a)</strong> de uma união existente</span>
+          </label>
+          <label class="sub-campo">
+            <span>União (pai + mãe):</span>
+            <select name="rel_uniao" id="relUniaoSelect"><option value="">—</option></select>
+          </label>
+
+          <label class="radio-opt">
+            <input type="radio" name="rel_tipo" value="conjuge" />
+            <span>É <strong>cônjuge</strong> de alguém</span>
+          </label>
+          <label class="sub-campo">
+            <span>Cônjuge de:</span>
+            <select name="rel_conjuge" id="relConjugeSelect"><option value="">—</option></select>
+            <span>Ordem (1ª, 2ª...):</span>
+            <input type="number" name="rel_ordem" min="1" max="20" value="1" />
+          </label>
+
+          <label class="radio-opt">
+            <input type="radio" name="rel_tipo" value="independente" />
+            <span><strong>Independente</strong> (sem ligação direta agora)</span>
+          </label>
+        </fieldset>
+
+        <div class="form-acoes">
+          <button type="button" class="btn-secondary" data-close="modalForm">Cancelar</button>
+          <button type="submit" class="btn-primary">💾 Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Modal Estatísticas ===== -->
+  <div class="modal" id="modalStats" hidden>
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalStats">✕</button>
+      <h2>📊 Estatísticas</h2>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===== Modal Conquistas ===== -->
+  <div class="modal" id="modalConquistas" hidden>
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalConquistas">✕</button>
+      <h2>🏆 Conquistas</h2>
+      <p class="modal-sub">Marque sua jornada construindo a árvore da família</p>
+      <div class="conquistas-grid" id="conquistasGrid"></div>
+    </div>
+  </div>
+
+  <!-- ===== Modal Config ===== -->
+  <div class="modal" id="modalConfig" hidden>
+    <div class="modal-card">
+      <button class="modal-close" data-close="modalConfig">✕</button>
+      <h2>⚙️ Opções</h2>
+      <div class="config-list">
+        <button class="config-item" id="btnTrocarFoco">
+          <span class="config-emoji">⊙</span>
+          <div><strong>Trocar pessoa central</strong><small>Escolher quem fica no centro da árvore</small></div>
+        </button>
+        <button class="config-item warn" id="btnResetar">
+          <span class="config-emoji">🔄</span>
+          <div><strong>Restaurar dados iniciais</strong><small>Voltar à árvore padrão (apaga seus dados!)</small></div>
+        </button>
+        <button class="config-item danger" id="btnApagarTudo">
+          <span class="config-emoji">🗑️</span>
+          <div><strong>Apagar tudo</strong><small>Limpar toda a árvore</small></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div class="toast" id="toast" hidden></div>
+
+  <!-- ===== Conquista popup ===== -->
+  <div class="conquista-popup" id="conquistaPopup" hidden>
+    <div class="conquista-emoji" id="conquistaEmoji">🏆</div>
+    <div>
+      <strong id="conquistaTitulo">Conquista!</strong>
+      <p id="conquistaDesc"></p>
+    </div>
+  </div>
+
+  <!-- canvas-confetti via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
