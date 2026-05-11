@@ -35,10 +35,13 @@ const DADOS_PADRAO = {
                     bio: 'Bisavó paterna. Esposa de José Luiz Martins.',
                     parentUnionId: null },
 
-    // === Avô paterno ===
+    // === Avós paternos ===
     jose_luiz_jr: { id: 'jose_luiz_jr', nome: 'José Luiz Martins Junior', genero: 'M',
                     bio: 'Avô paterno. Filho de José Luiz e Algemira, pai de Gilberto.',
                     parentUnionId: 'u_jose_algemira' },
+    ocenia:       { id: 'ocenia', nome: 'Ocenia Martins', genero: 'F',
+                    bio: 'Avó paterna. Esposa de José Luiz Junior, mãe de Gilberto.',
+                    parentUnionId: null },
 
     gilberto: { id: 'gilberto', nome: 'Gilberto Carlos Martins', genero: 'M',
                 bio: 'Patriarca da nossa linhagem Martins. Casou três vezes e teve oito filhos.',
@@ -90,7 +93,7 @@ const DADOS_PADRAO = {
   unions: {
     // Ancestrais
     u_jose_algemira: { id: 'u_jose_algemira', partners: ['jose_luiz', 'algemira'], ordem: 1, periodo: '' },
-    u_jose_jr:       { id: 'u_jose_jr',       partners: ['jose_luiz_jr', null],    ordem: 1, periodo: '' },
+    u_jose_jr:       { id: 'u_jose_jr',       partners: ['jose_luiz_jr', 'ocenia'], ordem: 1, periodo: '' },
 
     u_gilberto_nilma:  { id: 'u_gilberto_nilma',  partners: ['gilberto', 'nilma'],  ordem: 1, periodo: '' },
     u_gilberto_eliane: { id: 'u_gilberto_eliane', partners: ['gilberto', 'eliane'], ordem: 2, periodo: '' },
