@@ -528,6 +528,49 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// === Datas: parse e format ===
+// Aceita "15/03/1985", "03/1985", "1985", "1985-03-15", etc.
+function parseData(str) {
+  if (!str) return { dia: '', mes: '', ano: '' };
+  str = String(str).trim();
+  // ISO: 1985-03-15 ou 1985-03 ou 1985
+  let m = str.match(/^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/);
+  if (m) return { dia: m[3] || '', mes: m[2] || '', ano: m[1] };
+  // BR: 15/03/1985 ou 03/1985 ou 15-03-1985
+  m = str.match(/^(?:(\d{1,2})[\/\-])?(?:(\d{1,2})[\/\-])(\d{4})$/);
+  if (m) return { dia: m[1] || '', mes: m[2], ano: m[3] };
+  // Só ano: 1985
+  m = str.match(/^(\d{4})$/);
+  if (m) return { dia: '', mes: '', ano: m[1] };
+  // Fallback: pega qualquer 4 dígitos
+  const ano = str.match(/(\d{4})/);
+  return { dia: '', mes: '', ano: ano ? ano[1] : '' };
+}
+
+// Formata para armazenamento: "15/03/1985", "03/1985", "1985" ou ""
+function formatarData(dia, mes, ano) {
+  if (!ano) return '';
+  const a = String(ano).padStart(4, '0');
+  if (!mes) return a;
+  const m = String(mes).padStart(2, '0');
+  if (!dia) return m + '/' + a;
+  const d = String(dia).padStart(2, '0');
+  return d + '/' + m + '/' + a;
+}
+
+// Formato para exibição amigável: "15 de março de 1985" ou "março de 1985" ou "1985"
+const MESES_NOMES = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                     'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+function formatarDataExibicao(str) {
+  if (!str) return '';
+  const { dia, mes, ano } = parseData(str);
+  if (!ano) return str;
+  if (!mes) return ano;
+  const nomeMes = MESES_NOMES[parseInt(mes, 10)] || mes;
+  if (!dia) return nomeMes + ' de ' + ano;
+  return parseInt(dia, 10) + ' de ' + nomeMes + ' de ' + ano;
+}
+
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -1000,9 +1043,9 @@ function abrirPerfil(id) {
   document.getElementById('perfilNome').textContent = m.nome + (m.apelido ? ' (' + m.apelido + ')' : '');
 
   let vida = '';
-  if (m.nascimento) vida += '🌱 ' + m.nascimento;
+  if (m.nascimento) vida += '🌱 ' + formatarDataExibicao(m.nascimento);
   if (m.local_nascimento) vida += ' · ' + m.local_nascimento;
-  if (m.falecimento) vida += '   ✝ ' + m.falecimento;
+  if (m.falecimento) vida += '   ✝ ' + formatarDataExibicao(m.falecimento);
   document.getElementById('perfilVida').textContent = vida;
 
   const foto = document.getElementById('perfilFoto');
@@ -1022,9 +1065,10 @@ function abrirPerfil(id) {
     ['Nome', m.nome],
     ['Apelido', m.apelido],
     ['Gênero', m.genero === 'M' ? 'Masculino' : (m.genero === 'F' ? 'Feminino' : (m.genero === 'O' ? 'Outro' : ''))],
-    ['Nascimento', m.nascimento],
-    ['Local', m.local_nascimento],
-    ['Falecimento', m.falecimento],
+    ['Nascimento', formatarDataExibicao(m.nascimento)],
+    ['Local de nascimento', m.local_nascimento],
+    ['Falecimento', formatarDataExibicao(m.falecimento)],
+    ['Local de falecimento', m.local_falecimento],
     ['Profissão', m.profissao]
   ].forEach(([lbl, val]) => {
     if (!val) return;
@@ -1141,9 +1185,15 @@ function abrirFormPessoa(modo, opts = {}) {
     f.nome.value = m.nome || '';
     f.apelido.value = m.apelido || '';
     f.genero.value = m.genero || '';
-    f.nascimento.value = m.nascimento || '';
+    const nasc = parseData(m.nascimento);
+    f.nasc_dia.value = nasc.dia;
+    f.nasc_mes.value = nasc.mes;
+    f.nasc_ano.value = nasc.ano;
+    const fale = parseData(m.falecimento);
+    f.fale_dia.value = fale.dia;
+    f.fale_mes.value = fale.mes;
+    f.fale_ano.value = fale.ano;
     f.local_nascimento.value = m.local_nascimento || '';
-    f.falecimento.value = m.falecimento || '';
     f.local_falecimento.value = m.local_falecimento || '';
     f.profissao.value = m.profissao || '';
     f.bio.value = m.bio || '';
@@ -1313,13 +1363,16 @@ document.getElementById('formPessoa').addEventListener('submit', (e) => {
   const nome = f.nome.value.trim();
   if (!nome) { toast('Nome é obrigatório'); return; }
 
+  const nascimento = formatarData(f.nasc_dia.value, f.nasc_mes.value, f.nasc_ano.value);
+  const falecimento = formatarData(f.fale_dia.value, f.fale_mes.value, f.fale_ano.value);
+
   const dadosBase = {
     nome,
     apelido: f.apelido.value.trim(),
     genero: f.genero.value,
-    nascimento: f.nascimento.value.trim(),
+    nascimento,
     local_nascimento: f.local_nascimento.value.trim(),
-    falecimento: f.falecimento.value.trim(),
+    falecimento,
     local_falecimento: f.local_falecimento.value.trim(),
     profissao: f.profissao.value.trim(),
     bio: f.bio.value.trim(),

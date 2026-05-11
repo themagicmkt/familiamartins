@@ -236,22 +236,59 @@
 
         <div class="field-row">
           <label class="field">
-            <span>Nascimento</span>
-            <input type="text" name="nascimento" placeholder="dd/mm/aaaa" maxlength="20" />
+            <span>🌱 Nascimento</span>
+            <div class="data-fields">
+              <input type="number" name="nasc_dia" min="1" max="31" placeholder="dia" inputmode="numeric" />
+              <select name="nasc_mes">
+                <option value="">mês</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+              <input type="number" name="nasc_ano" min="1700" max="2100" placeholder="ano" inputmode="numeric" />
+            </div>
+            <small class="field-dica">Pode preencher só o ano se não souber a data completa</small>
           </label>
           <label class="field">
-            <span>Local</span>
-            <input type="text" name="local_nascimento" maxlength="100" />
+            <span>📍 Local de nascimento</span>
+            <input type="text" name="local_nascimento" placeholder="Cidade, Estado" maxlength="100" />
           </label>
         </div>
 
         <div class="field-row">
           <label class="field">
-            <span>Falecimento (se aplicável)</span>
-            <input type="text" name="falecimento" placeholder="dd/mm/aaaa" maxlength="20" />
+            <span>🕊️ Falecimento <small style="font-weight:normal;color:var(--text-muted)">(se aplicável)</small></span>
+            <div class="data-fields">
+              <input type="number" name="fale_dia" min="1" max="31" placeholder="dia" inputmode="numeric" />
+              <select name="fale_mes">
+                <option value="">mês</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+              <input type="number" name="fale_ano" min="1700" max="2100" placeholder="ano" inputmode="numeric" />
+            </div>
           </label>
           <label class="field">
-            <span>Local</span>
+            <span>📍 Local</span>
             <input type="text" name="local_falecimento" maxlength="100" />
           </label>
         </div>
