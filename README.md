@@ -15,7 +15,8 @@
 - 🔍 **Busca instantânea** — encontra qualquer familiar em tempo real
 - 🏆 **Conquistas e gamificação** — 8 badges desbloqueáveis, confete ao adicionar pessoas
 - 📊 **Estatísticas** — pessoas, gerações, uniões, fotos, biografias
-- 💾 **Persistência local** — salva no navegador (localStorage), backup/restauração em JSON
+- ☁️ **Banco compartilhado em tempo real** — Supabase (Postgres) com real-time, todos os familiares veem as mesmas mudanças
+- 💾 **Modo offline** — cache em localStorage, backup/restauração em JSON
 
 ## 🚀 Como usar localmente
 
@@ -29,15 +30,16 @@
 2. Source: `Deploy from a branch` → `main` → `/ (root)`
 3. Salve. O site fica disponível em `https://themagicmkt.github.io/familiamartins/`
 
-> ⚠️ **Atenção:** este site é local-only. Cada pessoa que acessa vê SUA própria versão (armazenada no próprio navegador). Para edição compartilhada real entre todos os familiares, é preciso adicionar um backend (Firebase, Supabase, etc.).
+> ✅ **Banco compartilhado ativo:** o site usa Supabase como banco em tempo real. Todas as edições (fotos, biografias, novos familiares) ficam disponíveis para toda a família automaticamente.
 
 ## 🛠️ Tecnologias
 
 - HTML5 / CSS3 puro (sem build step)
 - JavaScript vanilla (sem frameworks)
+- [Supabase](https://supabase.com) (PostgreSQL + Realtime) para banco compartilhado
 - [canvas-confetti](https://github.com/catdad/canvas-confetti) via CDN
 - Google Fonts (Manrope + Fraunces)
-- LocalStorage para persistência
+- LocalStorage para cache offline e preferências
 
 ## 📐 Estrutura
 

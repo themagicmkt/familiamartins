@@ -3,12 +3,23 @@
 // ============================================================
 
 const SENHA = 'Martins';
-const STORAGE_KEY = 'familia_martins_v3';
-const STORAGE_KEY_V2 = 'familia_martins_v2';
-const STORAGE_KEY_V1 = 'familia_martins_v1';
+const STORAGE_KEY = 'familia_martins_v3';      // fallback offline
 const SESSION_KEY = 'familia_martins_logged';
 const CONQUISTAS_KEY = 'familia_martins_conquistas';
-const VIEWER_KEY = 'familia_martins_viewer'; // Quem é você (por navegador)
+const VIEWER_KEY = 'familia_martins_viewer';    // Quem é você (por navegador)
+const FOCO_KEY = 'familia_martins_foco';        // Foco atual (por navegador)
+
+// === Supabase config (chaves públicas — seguras no frontend) ===
+const SUPABASE_URL = 'https://enokbsywczmoijwqqytv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EOtbDtXXnPVoD0tQDcyBAA_vt2Q_DgU';
+const SB_TABLE = 'family_tree';
+const SB_ROW_ID = 'martins';
+const sb = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+let modoOffline = !sb; // se SDK não carregou, usa só localStorage
+let ultimoSalvarLocal = 0; // para ignorar echoes do real-time
 
 // ============================================================
 // DADOS PADRAO
@@ -156,6 +167,10 @@ function atualizarViewerChip() {
   if (m.foto) { av.style.backgroundImage = "url('" + m.foto + "')"; av.textContent = ''; }
   else { av.style.backgroundImage = ''; av.textContent = gerarIniciais(m.nome); }
   document.getElementById('viewerName').textContent = m.apelido || m.nome.split(' ')[0];
+
+  // Indicador de status online/offline
+  const brand = document.querySelector('.brand-text span');
+  if (brand) brand.textContent = modoOffline ? '⚠️ offline' : '🟢 online · sincronizado';
 }
 function voltarPraMim() {
   if (!viewerId) { abrirQuemSouEu(); return; }
@@ -222,29 +237,117 @@ function escolherSouEu(id) {
 // ============================================================
 function clonePadrao() { return JSON.parse(JSON.stringify(DADOS_PADRAO)); }
 
-function carregar() {
-  try {
-    let raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && p.members && p.unions && p.config) return p;
+// Foco é per-browser (não compartilhado entre familiares)
+function lerFocoLocal() { return localStorage.getItem(FOCO_KEY); }
+function gravarFocoLocal(id) {
+  if (id) localStorage.setItem(FOCO_KEY, id);
+}
+
+// Carrega dados do Supabase. Fallback: localStorage; última opção: padrão.
+async function carregar() {
+  // Tenta Supabase primeiro
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from(SB_TABLE)
+        .select('data')
+        .eq('id', SB_ROW_ID)
+        .single();
+
+      if (!error && data && data.data && data.data.members) {
+        const remoto = {
+          members: data.data.members,
+          unions: data.data.unions || {},
+          config: { focoId: lerFocoLocal() || 'diogo' }
+        };
+        // Cache local também
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(remoto)); } catch (e) {}
+        return remoto;
+      }
+
+      // Linha existe mas vazia → semeia com padrão
+      const padrao = clonePadrao();
+      padrao.config.focoId = lerFocoLocal() || 'diogo';
+      await sb.from(SB_TABLE).upsert({
+        id: SB_ROW_ID,
+        data: { members: padrao.members, unions: padrao.unions },
+        updated_at: new Date().toISOString()
+      });
+      return padrao;
+    } catch (e) {
+      console.warn('Supabase falhou, usando cache local:', e);
+      modoOffline = true;
+      toast('⚠️ Sem conexão — modo offline');
     }
-    // Tenta migrar de v2 (mesma estrutura)
-    raw = localStorage.getItem(STORAGE_KEY_V2);
+  }
+
+  // Fallback: cache local
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p && p.members && p.unions && p.config) {
-        localStorage.setItem(STORAGE_KEY, raw);
+      if (p && p.members && p.unions) {
+        p.config = p.config || { focoId: lerFocoLocal() || 'diogo' };
         return p;
       }
     }
   } catch (e) { console.warn(e); }
-  return clonePadrao();
+
+  // Última opção: padrão
+  const padrao = clonePadrao();
+  padrao.config.focoId = lerFocoLocal() || 'diogo';
+  return padrao;
 }
 
+// Salva no Supabase (fire-and-forget) + cache local. Foco fica só local.
 function salvar() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); }
-  catch (e) { toast('Erro ao salvar — pode estar cheio'); console.error(e); }
+  ultimoSalvarLocal = Date.now();
+
+  // Cache local sempre
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); } catch (e) {}
+  if (dados.config && dados.config.focoId) gravarFocoLocal(dados.config.focoId);
+
+  // Salva remoto se online
+  if (!sb || modoOffline) return;
+  sb.from(SB_TABLE)
+    .update({
+      data: { members: dados.members, unions: dados.unions },
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', SB_ROW_ID)
+    .then(({ error }) => {
+      if (error) {
+        console.error('Erro ao salvar no Supabase:', error);
+        toast('⚠️ Erro ao salvar online — mudanças locais ok');
+      }
+    });
+}
+
+// Real-time: escuta mudanças de outros familiares
+function iniciarRealtime() {
+  if (!sb || modoOffline) return;
+  sb.channel('family_tree_changes')
+    .on('postgres_changes',
+        { event: '*', schema: 'public', table: SB_TABLE, filter: 'id=eq.' + SB_ROW_ID },
+        payload => {
+          // Ignora echoes do nosso próprio salvar (últimos 1.5s)
+          if (Date.now() - ultimoSalvarLocal < 1500) return;
+
+          const novo = payload.new && payload.new.data;
+          if (!novo || !novo.members) return;
+
+          const mudouMembros = JSON.stringify(novo.members) !== JSON.stringify(dados.members);
+          const mudouUnioes = JSON.stringify(novo.unions || {}) !== JSON.stringify(dados.unions);
+          if (!mudouMembros && !mudouUnioes) return;
+
+          dados.members = novo.members;
+          dados.unions = novo.unions || {};
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); } catch (e) {}
+          renderArvore();
+          atualizarViewerChip();
+          toast('🔄 Atualizado por outro familiar');
+        })
+    .subscribe();
 }
 
 function carregarConquistas() {
@@ -286,8 +389,10 @@ function mostrarConquista(c) {
 }
 
 function resetar() {
-  if (!confirm('Voltar à árvore inicial padrão? Você vai perder mudanças.')) return;
-  dados = clonePadrao();
+  if (!confirm('Voltar à árvore inicial padrão? ATENÇÃO: isso afeta TODOS os familiares (banco compartilhado).')) return;
+  const padrao = clonePadrao();
+  dados.members = padrao.members;
+  dados.unions = padrao.unions;
   salvar();
   renderArvore();
   fechar('modalConfig');
@@ -295,17 +400,16 @@ function resetar() {
 }
 
 function apagarTudo() {
-  if (!confirm('Apagar TUDO? Não dá pra desfazer.')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(STORAGE_KEY_V2);
-  localStorage.removeItem(STORAGE_KEY_V1);
+  if (!confirm('Apagar TUDO no banco compartilhado? ATENÇÃO: vai apagar para TODA a família!')) return;
+  if (!confirm('Última chance — apagar mesmo?')) return;
+  dados.members = {};
+  dados.unions = {};
   conquistasGanhas.clear();
   salvarConquistas();
-  dados = clonePadrao();
   salvar();
   renderArvore();
   fechar('modalConfig');
-  toast('Tudo limpo!');
+  toast('Tudo limpo');
 }
 
 // ============================================================
@@ -1596,7 +1700,15 @@ document.getElementById('btnSair').addEventListener('click', () => {
 // INICIO
 // ============================================================
 document.getElementById('ano').textContent = new Date().getFullYear();
-dados = carregar();
 carregarConquistas();
 
-if (sessionStorage.getItem(SESSION_KEY) === '1') fazerLogin();
+(async function init() {
+  try {
+    dados = await carregar();
+  } catch (e) {
+    console.error('Erro fatal ao carregar:', e);
+    dados = clonePadrao();
+  }
+  iniciarRealtime();
+  if (sessionStorage.getItem(SESSION_KEY) === '1') fazerLogin();
+})();
