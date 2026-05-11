@@ -690,6 +690,19 @@ function ordemTexto(n) {
   return ({1:'1ª', 2:'2ª', 3:'3ª', 4:'4ª', 5:'5ª'}[n]) || (n + 'ª');
 }
 
+// Ordena lista de pessoas: mais antigo (menor ano de nascimento) primeiro.
+// Quando ambos não têm data, mantém a ordem original (sort estável).
+function ordenarPorIdade(lista) {
+  return [...lista].sort((a, b) => {
+    const ay = (a.nascimento || '').match(/\d{4}/);
+    const by = (b.nascimento || '').match(/\d{4}/);
+    if (ay && by) return parseInt(ay[0], 10) - parseInt(by[0], 10);
+    if (ay && !by) return -1; // quem tem data conhecida vem primeiro
+    if (!ay && by) return 1;
+    return 0;
+  });
+}
+
 // ============================================================
 // RENDER ARVORE
 // ============================================================
@@ -720,7 +733,7 @@ function renderArvore() {
   }
 
   // === Avós ===
-  const avos = avosDe(focoId);
+  const avos = ordenarPorIdade(avosDe(focoId));
   if (avos.length > 0) {
     el.appendChild(criarCamada('Avós', avos.map(a => criarPessoaCard(a, { mini: true, layer: 'layer-avos' }))));
     el.appendChild(criarConector());
@@ -739,9 +752,9 @@ function renderArvore() {
   // === Geração (irmãos + foco) ===
   const { plenos, meios } = irmaos(focoId);
   const gerCards = [];
-  meios.forEach(m => gerCards.push(criarPessoaCard(m, { meio: true })));
+  ordenarPorIdade(meios).forEach(m => gerCards.push(criarPessoaCard(m, { meio: true })));
   if (foco.parentUnionId) {
-    filhosDeUniao(foco.parentUnionId).forEach(p => {
+    ordenarPorIdade(filhosDeUniao(foco.parentUnionId)).forEach(p => {
       gerCards.push(criarPessoaCard(p, { foco: p.id === focoId }));
     });
   } else {
@@ -789,7 +802,7 @@ function renderArvore() {
       }
       card.appendChild(row);
 
-      const filhos = filhosDeUniao(u.id);
+      const filhos = ordenarPorIdade(filhosDeUniao(u.id));
       const filhosWrap = document.createElement('div');
       filhosWrap.className = 'union-children';
       if (filhos.length === 0) {
@@ -822,7 +835,7 @@ function renderArvore() {
   el.appendChild(criarCamada('Cônjuges e filhos', [unionsBlock]));
 
   // === Netos ===
-  const netos = netosDe(focoId);
+  const netos = ordenarPorIdade(netosDe(focoId));
   if (netos.length > 0) {
     el.appendChild(criarConector());
     el.appendChild(criarCamada('Netos', netos.map(n => criarPessoaCard(n, { mini: true, layer: 'layer-netos' }))));
@@ -936,14 +949,16 @@ function abrirPerfil(id) {
 function renderFamiliaPainel(id) {
   const painel = document.getElementById('painelFamilia');
   painel.innerHTML = '';
-  const pais = paisDe(id);
+  const pais = ordenarPorIdade(paisDe(id));
   const { plenos, meios } = irmaos(id);
+  const plenosOrdenados = ordenarPorIdade(plenos);
+  const meiosOrdenados = ordenarPorIdade(meios);
   const unioes = unioesDe(id);
-  const filhos = filhosDe(id);
+  const filhos = ordenarPorIdade(filhosDe(id));
 
   if (pais.length > 0) painel.appendChild(grupoFamilia('Pais', pais));
-  if (plenos.length > 0) painel.appendChild(grupoFamilia('Irmãos', plenos));
-  if (meios.length > 0) painel.appendChild(grupoFamilia('Meios-irmãos', meios));
+  if (plenosOrdenados.length > 0) painel.appendChild(grupoFamilia('Irmãos', plenosOrdenados));
+  if (meiosOrdenados.length > 0) painel.appendChild(grupoFamilia('Meios-irmãos', meiosOrdenados));
 
   if (unioes.length > 0) {
     const conjs = [];
