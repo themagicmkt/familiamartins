@@ -43,11 +43,20 @@ const DADOS_PADRAO = {
                     bio: 'Avó paterna. Esposa de José Luiz Junior, mãe de Gilberto.',
                     parentUnionId: null },
 
+    // === Avós maternos ===
+    eugenio:      { id: 'eugenio', nome: 'Eugenio', genero: 'M',
+                    bio: 'Avô materno. Pai de Nilma.',
+                    parentUnionId: null },
+    adelina:      { id: 'adelina', nome: 'Adelina dos Santos', genero: 'F',
+                    bio: 'Avó materna. Mãe de Nilma.',
+                    parentUnionId: null },
+
     gilberto: { id: 'gilberto', nome: 'Gilberto Carlos Martins', genero: 'M',
                 bio: 'Patriarca da nossa linhagem Martins. Casou três vezes e teve oito filhos.',
                 parentUnionId: 'u_jose_jr' },
     nilma:    { id: 'nilma', nome: 'Nilma Costa Martins', genero: 'F',
-                bio: 'Primeira esposa de Gilberto.', parentUnionId: null },
+                bio: 'Primeira esposa de Gilberto. Filha de Eugenio e Adelina dos Santos.',
+                parentUnionId: 'u_eugenio_adelina' },
     eliane:   { id: 'eliane', nome: 'Eliane Solange Leal', genero: 'F',
                 bio: 'Segunda esposa de Gilberto.', parentUnionId: null },
     ester:    { id: 'ester', nome: 'Ester Martins', genero: 'F',
@@ -94,6 +103,7 @@ const DADOS_PADRAO = {
     // Ancestrais
     u_jose_algemira: { id: 'u_jose_algemira', partners: ['jose_luiz', 'algemira'], ordem: 1, periodo: '' },
     u_jose_jr:       { id: 'u_jose_jr',       partners: ['jose_luiz_jr', 'ocenia'], ordem: 1, periodo: '' },
+    u_eugenio_adelina: { id: 'u_eugenio_adelina', partners: ['eugenio', 'adelina'], ordem: 1, periodo: '' },
 
     u_gilberto_nilma:  { id: 'u_gilberto_nilma',  partners: ['gilberto', 'nilma'],  ordem: 1, periodo: '' },
     u_gilberto_eliane: { id: 'u_gilberto_eliane', partners: ['gilberto', 'eliane'], ordem: 2, periodo: '' },
@@ -921,20 +931,8 @@ function renderArvore() {
     welc.textContent = 'Olá, ' + primeiroNome + '! 👋';
   }
 
-  // === Ancestrais (avós, bisavós, trisavós, …) ===
-  // ancNiveis[0] = pais, [1] = avós, [2] = bisavós, [3] = trisavós, etc.
-  const ancNiveis = ancestraisPorNivel(focoId, 6);
-  const LABELS_ANC = [null, 'Avós', 'Bisavós', 'Trisavós', 'Tetravós', 'Pentavós', '6ª geração'];
-  const LAYERS_ANC = [null, 'layer-avos', 'layer-bisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos'];
-
-  // Renderiza dos mais antigos (último índice) até os avós (índice 1)
-  for (let i = ancNiveis.length - 1; i >= 1; i--) {
-    const nivel = ordenarPorIdade(ancNiveis[i]);
-    if (nivel.length === 0) continue;
-    el.appendChild(criarCamada(LABELS_ANC[i] || ((i + 1) + 'ª geração'),
-      nivel.map(a => criarPessoaCard(a, { mini: true, layer: LAYERS_ANC[i] || 'layer-trisavos' }))));
-    el.appendChild(criarConector());
-  }
+  // === Ancestrais organizados em casais por lado (paterno/materno) ===
+  renderAncestraisOrganizados(focoId, el);
 
   // === Pais ===
   const m_foco = pessoa(focoId);
@@ -1060,6 +1058,86 @@ function criarConector() {
   const c = document.createElement('div');
   c.className = 'layer-connector';
   return c;
+}
+
+// Renderiza avós, bisavós, trisavós como CASAIS organizados por lineage,
+// separando lado paterno do materno e indicando "Pais de X" pra cada bloco.
+function renderAncestraisOrganizados(focoId, el) {
+  const LABELS = ['Avós', 'Bisavós', 'Trisavós', 'Tetravós', 'Pentavós', '6ª geração acima'];
+  const LAYER_CLS = ['layer-avos', 'layer-bisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos', 'layer-trisavos'];
+
+  // descendentes = pessoas cujos pais estamos buscando neste nível
+  let descendentes = paisDe(focoId);
+  const niveis = []; // array de arrays de { descendente, union, p1, p2 }
+
+  let safety = 8;
+  while (descendentes.length > 0 && safety-- > 0) {
+    const casaisNivel = [];
+    descendentes.forEach(d => {
+      if (!d.parentUnionId) return;
+      const u = dados.unions[d.parentUnionId];
+      if (!u) return;
+      casaisNivel.push({
+        descendente: d,
+        union: u,
+        p1: u.partners[0] ? pessoa(u.partners[0]) : null,
+        p2: u.partners[1] ? pessoa(u.partners[1]) : null
+      });
+    });
+    if (casaisNivel.length === 0) break;
+    niveis.push(casaisNivel);
+    // Próximo nível: pais de cada pessoa neste casal
+    descendentes = [];
+    casaisNivel.forEach(c => {
+      if (c.p1) descendentes.push(c.p1);
+      if (c.p2) descendentes.push(c.p2);
+    });
+  }
+
+  // Renderiza do mais antigo (último) ao mais novo (índice 0 = avós)
+  for (let i = niveis.length - 1; i >= 0; i--) {
+    const casais = niveis[i];
+    const layerCls = LAYER_CLS[i] || 'layer-trisavos';
+    const label = LABELS[i] || ((i + 2) + 'ª geração');
+
+    const layer = document.createElement('div');
+    layer.className = 'layer';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'layer-label';
+    lbl.textContent = label;
+    layer.appendChild(lbl);
+
+    const row = document.createElement('div');
+    row.className = 'layer-row ancestral-row';
+
+    casais.forEach((c, idx) => {
+      const bloco = document.createElement('div');
+      bloco.className = 'ancestor-block';
+
+      // Label do bloco
+      const sideLbl = document.createElement('div');
+      sideLbl.className = 'side-label';
+      if (i === 0 && casais.length === 2) {
+        // Avós: paterno/materno claro
+        sideLbl.textContent = idx === 0 ? '👨 Paternos' : '👩 Maternos';
+      } else {
+        const nomeDesc = c.descendente.apelido || c.descendente.nome.split(' ')[0];
+        sideLbl.textContent = '↑ Pais de ' + nomeDesc;
+      }
+      bloco.appendChild(sideLbl);
+
+      // Casal (ou solo se um dos partners é null)
+      const casal = criarCasal(c.p1, c.p2, c.union, { mini: true, layer: layerCls });
+      bloco.appendChild(casal);
+
+      row.appendChild(bloco);
+    });
+
+    layer.appendChild(row);
+    el.appendChild(layer);
+    el.appendChild(criarConector());
+  }
 }
 
 function renderStatsStrip() {

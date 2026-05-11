@@ -452,6 +452,41 @@ button { cursor: pointer; border: none; background: none; }
   border-radius: 1px;
 }
 
+/* === Blocos de ancestrais (avós, bisavós) === */
+.ancestral-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.ancestor-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(247,245,255,0.4));
+  border-radius: var(--radius);
+  border: 1px solid var(--border-soft);
+}
+.side-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  padding: 4px 12px;
+  background: white;
+  border-radius: 100px;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+/* Cores diferenciadas para Paternos vs Maternos no nível Avós */
+.ancestor-block:has(.side-label:first-child) .side-label {
+  border: 1px solid var(--border);
+}
+
 /* === Couple === */
 .couple {
   display: flex; align-items: center; gap: 6px;
