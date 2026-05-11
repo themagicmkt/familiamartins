@@ -41,6 +41,15 @@
 - Google Fonts (Manrope + Fraunces)
 - LocalStorage para cache offline e preferências
 
+## 📚 Documentação
+
+| Para quem | Documento |
+|-----------|-----------|
+| 👨‍👩‍👧 Familiares usando o site | [docs/USUARIO.md](docs/USUARIO.md) |
+| 🛠️ Admin / desenvolvedor | [docs/TECNICO.md](docs/TECNICO.md) |
+| 🗄️ Modelo de dados | [docs/DADOS.md](docs/DADOS.md) |
+| 📖 Índice / visão geral | [docs/README.md](docs/README.md) |
+
 ## 📐 Estrutura
 
 ```
