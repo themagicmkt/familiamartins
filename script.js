@@ -16,9 +16,22 @@ const VIEWER_KEY = 'familia_martins_viewer'; // Quem é você (por navegador)
 const DADOS_PADRAO = {
   config: { focoId: 'diogo' },
   members: {
+    // === Bisavós paternos ===
+    jose_luiz:    { id: 'jose_luiz', nome: 'José Luiz Martins', genero: 'M',
+                    bio: 'Bisavô paterno. Raiz mais antiga conhecida da nossa linhagem Martins.',
+                    parentUnionId: null },
+    algemira:     { id: 'algemira', nome: 'Algemira Shatzmam Martins', genero: 'F',
+                    bio: 'Bisavó paterna. Esposa de José Luiz Martins.',
+                    parentUnionId: null },
+
+    // === Avô paterno ===
+    jose_luiz_jr: { id: 'jose_luiz_jr', nome: 'José Luiz Martins Junior', genero: 'M',
+                    bio: 'Avô paterno. Filho de José Luiz e Algemira, pai de Gilberto.',
+                    parentUnionId: 'u_jose_algemira' },
+
     gilberto: { id: 'gilberto', nome: 'Gilberto Carlos Martins', genero: 'M',
                 bio: 'Patriarca da nossa linhagem Martins. Casou três vezes e teve oito filhos.',
-                parentUnionId: null },
+                parentUnionId: 'u_jose_jr' },
     nilma:    { id: 'nilma', nome: 'Nilma Costa Martins', genero: 'F',
                 bio: 'Primeira esposa de Gilberto.', parentUnionId: null },
     eliane:   { id: 'eliane', nome: 'Eliane Solange Leal', genero: 'F',
@@ -64,6 +77,10 @@ const DADOS_PADRAO = {
                       parentUnionId: 'u_vitor_francine' }
   },
   unions: {
+    // Ancestrais
+    u_jose_algemira: { id: 'u_jose_algemira', partners: ['jose_luiz', 'algemira'], ordem: 1, periodo: '' },
+    u_jose_jr:       { id: 'u_jose_jr',       partners: ['jose_luiz_jr', null],    ordem: 1, periodo: '' },
+
     u_gilberto_nilma:  { id: 'u_gilberto_nilma',  partners: ['gilberto', 'nilma'],  ordem: 1, periodo: '' },
     u_gilberto_eliane: { id: 'u_gilberto_eliane', partners: ['gilberto', 'eliane'], ordem: 2, periodo: '' },
     u_gilberto_ester:  { id: 'u_gilberto_ester',  partners: ['gilberto', 'ester'],  ordem: 3, periodo: '' },
